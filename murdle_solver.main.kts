@@ -32,8 +32,7 @@ fun generateValidSolutions(size: Int): Sequence<Solution> {
     val permutations = permutations((1..size).toList())
     val products = cartesianProduct(List(size - 1) { permutations })
     val prefixes = (1..size).map { listOf(it) }
-    return products
-        .map { list -> (0..size-1).map { i -> prefixes[i] + list.map { it[i] } } }
+    return products.map { product -> (0..size-1).map { i -> prefixes[i] + product.map { it[i] } } }
 }
 
 val lines = java.io.File(args[0]).readLines()
