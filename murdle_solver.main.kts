@@ -1,5 +1,10 @@
 #!/usr/bin/env kotlin
 
+@file:Repository("https://repo1.maven.org/maven2/")
+@file:DependsOn("com.google.guava:guava:33.0.0-jre")
+
+import com.google.common.collect.Collections2.permutations
+
 typealias Combo = List<Int>
 typealias Solution = List<Combo>
 
@@ -18,30 +23,17 @@ class Constraint(val values: Combo) {
     }
 }
 
-fun <T> cartesianProduct(iterables: Iterable<Iterable<T>>) =
-    iterables.fold(listOf(listOf<T>())) { acc, input ->
+fun <T> cartesianProduct(iterables: Iterable<Iterable<T>>): Sequence<List<T>> =
+    iterables.asSequence().fold(sequenceOf(listOf<T>())) { acc, input ->
         acc.flatMap { output -> input.map { output + it } }
     }
 
 fun generateValidSolutions(size: Int): Sequence<Solution> {
-    var count = 0
-    val buckets = List(size - 1) { (1..size).toMutableSet() }
-
-    fun generateValidSolutionsInternal(): Sequence<Solution> = sequence {
-       if (buckets[0].size == 1) {
-            if (count++ % 100000 == 0) println(count - 1)
-            yield(listOf(buckets.map { it.first() }))
-        } else {
-            for (combo in cartesianProduct(buckets)) {
-                combo.forEachIndexed { index, it -> buckets[index].remove(it) }
-                yieldAll(generateValidSolutionsInternal().map { listOf(combo) + it })
-                combo.forEachIndexed { index, it -> buckets[index].add(it) }
-            }
-        }
-    }
-
-    return generateValidSolutionsInternal()
-        .map { it.mapIndexed { index, it -> listOf(index + 1) + it } }
+    val permutations = permutations((1..size).toList())
+    val products = cartesianProduct(List(size - 1) { permutations })
+    val prefixes = (1..size).map { listOf(it) }
+    return products
+        .map { list -> (0..size-1).map { i -> prefixes[i] + list.map { it[i] } } }
 }
 
 val lines = java.io.File(args[0]).readLines()
